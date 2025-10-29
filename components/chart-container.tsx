@@ -71,9 +71,21 @@ export function ChartContainer({ data }: ChartContainerProps) {
 
     candleSeriesRef.current = candleSeries
 
-    // Add candlestick data
+    // Add candlestick data with deduplication
     if (data.candlesticks.length > 0) {
-      candleSeries.setData(data.candlesticks)
+      // Sort by time and remove duplicates (keep latest entry for each timestamp)
+      const uniqueCandles = data.candlesticks.reduce((acc, current) => {
+        const existingIndex = acc.findIndex(item => item.time === current.time)
+        if (existingIndex >= 0) {
+          acc[existingIndex] = current // Replace with newer data
+        } else {
+          acc.push(current)
+        }
+        return acc
+      }, [] as typeof data.candlesticks)
+      
+      const sortedCandles = uniqueCandles.sort((a, b) => a.time - b.time)
+      candleSeries.setData(sortedCandles)
       chart.timeScale().fitContent()
     }
 
